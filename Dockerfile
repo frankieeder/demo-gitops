@@ -1,0 +1,6 @@
+FROM python:3.12-alpine
+ARG COMMIT=unknown
+ENV COMMIT=$COMMIT
+COPY app.py /app.py
+EXPOSE 8000
+CMD ["python", "/app.py"]

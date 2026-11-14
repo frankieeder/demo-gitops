@@ -1,0 +1,51 @@
+# The app, as plain Kubernetes. Shared by prod and every preview.
+# Environment-specific values (image tag, hostname, APP_ENV) are overridden per environment.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: demo }
+  template:
+    metadata:
+      labels: { app: demo }
+    spec:
+      containers:
+        - name: demo
+          image: ghcr.io/YOUR_GITHUB_USER/demo-gitops:overridden
+          env:
+            - name: APP_ENV
+              value: overridden
+          ports:
+            - containerPort: 8000
+          readinessProbe:
+            httpGet: { path: /, port: 8000 }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: demo
+spec:
+  selector: { app: demo }
+  ports:
+    - port: 80
+      targetPort: 8000
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: demo
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: overridden.demo.localhost
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: demo
+                port: { number: 80 }

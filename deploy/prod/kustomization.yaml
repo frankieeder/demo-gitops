@@ -1,0 +1,21 @@
+# Production = the base app + these overrides.
+# CI rewrites `newTag` after every build on main. That commit IS the deploy.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: demo-prod
+resources:
+  - ../base
+images:
+  - name: ghcr.io/YOUR_GITHUB_USER/demo-gitops
+    newTag: sha-placeholder
+patches:
+  - target: { kind: Ingress, name: demo }
+    patch: |-
+      - op: replace
+        path: /spec/rules/0/host
+        value: demo.localhost
+  - target: { kind: Deployment, name: demo }
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/env/0/value
+        value: prod

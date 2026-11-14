@@ -1,0 +1,47 @@
+# "For every open PR, run the PR's version of the app in its own namespace."
+# Argo asks GitHub for open PRs every 30s. A closed PR's Application is deleted.
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: demo-previews
+  namespace: argocd
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    - pullRequest:
+        github:
+          owner: YOUR_GITHUB_USER
+          repo: demo-gitops
+          tokenRef: { secretName: github-token, key: token }
+        requeueAfterSeconds: 30
+  template:
+    metadata:
+      name: "demo-pr-{{ .number }}"
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/YOUR_GITHUB_USER/demo-gitops.git
+        targetRevision: "{{ .head_sha }}"     # the PR's own deploy files, not main's
+        path: deploy/base
+        kustomize:
+          namespace: "demo-pr-{{ .number }}"
+          images:
+            - "ghcr.io/YOUR_GITHUB_USER/demo-gitops:sha-{{ .head_sha }}"
+          patches:
+            - target: { kind: Ingress, name: demo }
+              patch: |-
+                - op: replace
+                  path: /spec/rules/0/host
+                  value: pr-{{ .number }}.demo.localhost
+            - target: { kind: Deployment, name: demo }
+              patch: |-
+                - op: replace
+                  path: /spec/template/spec/containers/0/env/0/value
+                  value: pr-{{ .number }}
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: "demo-pr-{{ .number }}"
+      syncPolicy:
+        automated: { prune: true, selfHeal: true }
+        syncOptions: [CreateNamespace=true]
