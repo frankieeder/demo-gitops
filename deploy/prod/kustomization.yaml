@@ -7,14 +7,14 @@ resources:
   - ../base
 images:
   - name: ghcr.io/YOUR_GITHUB_USER/demo-gitops
-    newTag: sha-placeholder
+    newTag: sha-9715bf64e60b9eb45e860408a9ed427992dabd8a
 patches:
-  - target: { kind: Ingress, name: demo }
+  - target: {kind: Ingress, name: demo}
     patch: |-
       - op: replace
         path: /spec/rules/0/host
         value: demo.localhost
-  - target: { kind: Deployment, name: demo }
+  - target: {kind: Deployment, name: demo}
     patch: |-
       - op: replace
         path: /spec/template/spec/containers/0/env/0/value
