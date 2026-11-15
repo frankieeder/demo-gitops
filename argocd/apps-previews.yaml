@@ -1,0 +1,60 @@
+# Preview ONLY the apps a PR changed.
+#
+# A GitHub Action (.github/workflows/label-changed-apps.yml) labels each PR with
+# preview/<app> for every apps/<app>/ folder it touches. This ApplicationSet then
+# creates <app>-pr-<n> only for PRs carrying that app's label:
+#
+#   for each folder in apps/ (on main)
+#     for each open PR labelled preview/<that folder>
+#       deploy the PR's version of that app
+#
+# Limitation: a brand-new app folder (not yet on main) isn't previewed; it appears on merge.
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: apps-previews
+  namespace: argocd
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    - matrix:
+        generators:
+          - git:
+              repoURL: https://github.com/frankieeder/demo-gitops.git
+              revision: main
+              directories:
+                - path: apps/*
+          - pullRequest:
+              github:
+                owner: frankieeder
+                repo: demo-gitops
+                tokenRef: { secretName: github-token, key: token }
+                labels:
+                  - "preview/{{ .path.basename }}"     # only PRs that changed this app
+              requeueAfterSeconds: 30
+  template:
+    metadata:
+      name: "{{ .path.basename }}-pr-{{ .number }}"
+    spec:
+      project: default
+      sources:
+        - repoURL: https://bjw-s-labs.github.io/helm-charts
+          chart: app-template
+          targetRevision: 4.6.2
+          helm:
+            releaseName: "{{ .path.basename }}"
+            valueFiles:
+              - "$values/{{ .path.path }}/values.yaml"
+            parameters:
+              - name: ingress.app.hosts[0].host
+                value: "{{ .path.basename }}-pr-{{ .number }}.demo.localhost"
+        - repoURL: https://github.com/frankieeder/demo-gitops.git
+          targetRevision: "{{ .head_sha }}"        # the PR's version of the values
+          ref: values
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: "{{ .path.basename }}-pr-{{ .number }}"
+      syncPolicy:
+        automated: { prune: true, selfHeal: true }
+        syncOptions: [CreateNamespace=true]

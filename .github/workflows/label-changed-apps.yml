@@ -1,0 +1,44 @@
+# Labels each PR with preview/<app> for every apps/<app>/ folder it changes,
+# and removes labels for apps it no longer changes. Argo's apps-previews
+# ApplicationSet uses these labels to preview only the changed apps.
+name: label-changed-apps
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write          # labels are managed through the issues API
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Sync preview/<app> labels with the folders this PR changes
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          changed=$(git diff --name-only "$BASE"..."$HEAD" -- apps/ | cut -d/ -f2 | sort -u)
+          echo "Changed apps: ${changed:-none}"
+
+          current=$(gh pr view "$PR" --json labels -q '.labels[].name' | grep '^preview/' | sed 's#^preview/##' | sort -u || true)
+
+          for app in $changed; do
+            gh label create "preview/$app" --color 0E8A16 --description "Preview $app in this PR" --force >/dev/null
+            gh pr edit "$PR" --add-label "preview/$app"
+          done
+
+          for app in $current; do
+            if ! grep -qx "$app" <<<"$changed"; then
+              gh pr edit "$PR" --remove-label "preview/$app"
+            fi
+          done
