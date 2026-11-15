@@ -3,7 +3,7 @@
 import os
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
-MESSAGE = "Hello from GitOps"
+MESSAGE = "Hello from a PR"
 ENV = os.getenv("APP_ENV", "unknown")
 COMMIT = os.getenv("COMMIT", "local")
 
