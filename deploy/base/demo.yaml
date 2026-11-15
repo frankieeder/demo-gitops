@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: demo
-          image: ghcr.io/YOUR_GITHUB_USER/demo-gitops:overridden
+          image: ghcr.io/frankieeder/demo-gitops:overridden
           env:
             - name: APP_ENV
               value: overridden

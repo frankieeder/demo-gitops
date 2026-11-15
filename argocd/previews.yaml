@@ -11,7 +11,7 @@ spec:
   generators:
     - pullRequest:
         github:
-          owner: YOUR_GITHUB_USER
+          owner: frankieeder
           repo: demo-gitops
           tokenRef: { secretName: github-token, key: token }
         requeueAfterSeconds: 30
@@ -21,13 +21,13 @@ spec:
     spec:
       project: default
       source:
-        repoURL: https://github.com/YOUR_GITHUB_USER/demo-gitops.git
+        repoURL: https://github.com/frankieeder/demo-gitops.git
         targetRevision: "{{ .head_sha }}"     # the PR's own deploy files, not main's
         path: deploy/base
         kustomize:
           namespace: "demo-pr-{{ .number }}"
           images:
-            - "ghcr.io/YOUR_GITHUB_USER/demo-gitops:sha-{{ .head_sha }}"
+            - "ghcr.io/frankieeder/demo-gitops:sha-{{ .head_sha }}"
           patches:
             - target: { kind: Ingress, name: demo }
               patch: |-

@@ -6,7 +6,7 @@ namespace: demo-prod
 resources:
   - ../base
 images:
-  - name: ghcr.io/YOUR_GITHUB_USER/demo-gitops
+  - name: ghcr.io/frankieeder/demo-gitops
     newTag: sha-9715bf64e60b9eb45e860408a9ed427992dabd8a
 patches:
   - target: {kind: Ingress, name: demo}

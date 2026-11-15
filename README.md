@@ -28,8 +28,8 @@ cluster match. Git is the single source of truth.
 
 ## Setup (about 10 minutes, all on your MacBook Pro)
 
-1. **Create the repo.** Replace `YOUR_GITHUB_USER` everywhere
-   (`grep -rl YOUR_GITHUB_USER . | xargs sed -i '' 's/YOUR_GITHUB_USER/yourname/g'`),
+1. **Create the repo.** Replace `frankieeder` everywhere
+   (`grep -rl frankieeder . | xargs sed -i '' 's/frankieeder/yourname/g'`),
    then push to a **public** GitHub repo named `demo-gitops`.
 2. **Let the first build run** (Actions tab). Then on GitHub, open the `demo-gitops` package
    (your profile → Packages) → Package settings → **Change visibility → Public**, so the
