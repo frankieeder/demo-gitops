@@ -1,0 +1,28 @@
+# The entire definition of the whoami app.
+# http://whoami2.demo.localhost:8080 — reload to see the two pods take turns answering.
+controllers:
+  whoami:
+    replicas: 1
+    containers:
+      app:
+        image:
+          repository: traefik/whoami
+          tag: v1.10
+
+service:
+  app:
+    controller: whoami
+    ports:
+      http:
+        port: 80
+
+ingress:
+  app:
+    className: traefik
+    hosts:
+      - host: whoami2.demo.localhost
+        paths:
+          - path: /
+            service:
+              identifier: app
+              port: http
