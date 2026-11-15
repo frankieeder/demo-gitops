@@ -7,7 +7,7 @@ resources:
   - ../base
 images:
   - name: ghcr.io/frankieeder/demo-gitops
-    newTag: sha-02939259ee3171abde8a4c7b5ff9647cf174351f
+    newTag: sha-0fa9ba9ff514cbfee418d7901095eef847762a23
 patches:
   - target: {kind: Ingress, name: demo}
     patch: |-
