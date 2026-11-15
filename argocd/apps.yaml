@@ -1,0 +1,42 @@
+# Level 5: "every folder in apps/ is an app."
+# Each folder holds just a values.yaml for the bjw-s app-template Helm chart, which turns
+# ~15 lines of settings into a Deployment, Service and Ingress.
+# Add a folder + push → new app in a namespace named after the folder.
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: apps
+  namespace: argocd
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    - git:
+        repoURL: https://github.com/frankieeder/demo-gitops.git
+        revision: main
+        directories:
+          - path: apps/*
+  template:
+    metadata:
+      name: "{{ .path.basename }}"
+    spec:
+      project: default
+      sources:
+        # 1) the generic chart, from its public Helm repo
+        - repoURL: https://bjw-s-labs.github.io/helm-charts
+          chart: app-template
+          targetRevision: 4.6.2
+          helm:
+            releaseName: "{{ .path.basename }}"
+            valueFiles:
+              - "$values/{{ .path.path }}/values.yaml"
+        # 2) this repo, referenced as $values so the chart can read apps/<name>/values.yaml
+        - repoURL: https://github.com/frankieeder/demo-gitops.git
+          targetRevision: main
+          ref: values
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: "{{ .path.basename }}"
+      syncPolicy:
+        automated: { prune: true, selfHeal: true }
+        syncOptions: [CreateNamespace=true]
