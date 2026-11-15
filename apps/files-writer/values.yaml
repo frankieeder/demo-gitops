@@ -1,0 +1,22 @@
+defaultPodOptions:
+  nodeSelector:
+    storage/media: "true"
+
+controllers:
+  writer:
+    containers:
+      app:
+        image:
+          repository: busybox
+          tag: "1.36"
+        command: ["sh", "-c"]
+        args:
+          - while true; do echo "$(date -Iseconds) $(hostname)" >> /out/writer.log; sleep 10; done
+
+persistence:
+  media:
+    type: hostPath
+    hostPath: /data/media
+    hostPathType: Directory
+    globalMounts:
+      - path: /out
