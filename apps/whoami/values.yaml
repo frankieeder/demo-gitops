@@ -2,7 +2,7 @@
 # http://whoami.demo.localhost:8080 — reload to see the two pods take turns answering.
 controllers:
   whoami:
-    replicas: 2
+    replicas: 3
     containers:
       app:
         image:
