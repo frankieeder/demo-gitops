@@ -1,0 +1,98 @@
+defaultPodOptions:
+  nodeSelector:
+    storage/listmonk: "true"
+
+controllers:
+  listmonk:
+    containers:
+      app:
+        image:
+          repository: listmonk/listmonk
+          tag: v6.2.0
+        command: [sh, -c, "./listmonk --install --idempotent --yes --config '' && ./listmonk --upgrade --yes --config '' && ./listmonk --config ''"]
+        env:
+          LISTMONK_app__address: 0.0.0.0:9000
+          LISTMONK_db__host: listmonk-db
+          LISTMONK_db__port: "5432"
+          LISTMONK_db__user: listmonk
+          LISTMONK_db__database: listmonk
+          LISTMONK_db__ssl_mode: disable
+          LISTMONK_ADMIN_USER: admin
+          LISTMONK_db__password:
+            secretKeyRef:
+              name: listmonk-secrets
+              key: LISTMONK_DB_PASSWORD
+          LISTMONK_ADMIN_PASSWORD:
+            secretKeyRef:
+              name: listmonk-secrets
+              key: LISTMONK_ADMIN_PASSWORD
+        probes:
+          readiness:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /health
+                port: 9000
+  db:
+    containers:
+      app:
+        image:
+          repository: postgres
+          tag: 17-alpine
+        env:
+          POSTGRES_USER: listmonk
+          POSTGRES_DB: listmonk
+          PGDATA: /var/lib/postgresql/data/pgdata
+          POSTGRES_PASSWORD:
+            secretKeyRef:
+              name: listmonk-secrets
+              key: LISTMONK_DB_PASSWORD
+        probes:
+          readiness:
+            enabled: true
+            custom: true
+            spec:
+              exec:
+                command: [pg_isready, -U, listmonk]
+
+persistence:
+  uploads:
+    type: hostPath
+    hostPath: /data/listmonk/uploads
+    hostPathType: DirectoryOrCreate
+    advancedMounts:
+      listmonk:
+        app:
+          - path: /listmonk/uploads
+  db-data:
+    type: hostPath
+    hostPath: /data/listmonk/db
+    hostPathType: DirectoryOrCreate
+    advancedMounts:
+      db:
+        app:
+          - path: /var/lib/postgresql/data
+
+service:
+  app:
+    controller: listmonk
+    ports:
+      http:
+        port: 9000
+  db:
+    controller: db
+    ports:
+      postgres:
+        port: 5432
+
+ingress:
+  app:
+    className: traefik
+    hosts:
+      - host: listmonk.demo.localhost
+        paths:
+          - path: /
+            service:
+              identifier: app
+              port: http
