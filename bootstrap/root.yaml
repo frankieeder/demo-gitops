@@ -1,0 +1,21 @@
+# Level 4: the ONLY file you ever apply by hand.
+# It tells Argo: "everything in the argocd/ folder is yours to manage."
+# From then on, adding/removing a file in argocd/ adds/removes it from the cluster.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: root
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/frankieeder/demo-gitops.git
+    targetRevision: main
+    path: argocd
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
